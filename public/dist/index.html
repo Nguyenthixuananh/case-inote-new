@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        <title>Landing Page - Start Bootstrap Theme</title>
+        <!-- Favicon-->
+        <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+        <!-- Bootstrap icons-->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet" type="text/css" />
+        <!-- Google fonts-->
+        <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css" />
+        <!-- Core theme CSS (includes Bootstrap)-->
+        <link href="css/styles.css" rel="stylesheet" />
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+              integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css">
+
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+    </head>
+    <body>
+        <!-- Navigation-->
+        <nav class="navbar navbar-light bg-light static-top">
+            <div class="container">
+                <a class="navbar-brand" href="#!">Start Bootstrap</a>
+                <a class="btn btn-primary" href="#signup">Sign Up</a>
+            </div>
+        </nav>
+        <!-- Masthead-->
+        <header class="masthead">
+            <div class="container position-relative">
+                <div class="row justify-content-center">
+                    <div class="col-xl-6">
+                        <div class="container">
+                            <a href="" class="btn btn-success btn-add" data-target="#modal-add" data-toggle="modal">Add</a>
+                            <a href="{{ route('admin.logout') }}"><button>Log out</button></a>
+
+
+                            <hr>
+                            <label for="keyword">Tìm kiếm notes</label>
+                            <div class="form-g">
+                                <input type="text" name="keyword" id="keyword" class="form-control">
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                    <tr>
+                                        <th>No.</th>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Category</th>
+                                        <th>Action</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="listNote">
+                                    @foreach($notes as $key=>$note)
+                                    <tr>
+                                        <td id="{{$note->id}}">{{$key+1}}</td>
+                                        <td id="name-{{$note->id}}">{{$note->name}}</td>
+                                        <td id="description-{{$note->id}}">{{$note->description}}</td>
+                                        <td id="category-{{$note->id}}">{{$note->category}}</td>
+                                        <td>
+                                            <button data-url="{{route('notes.show', $note->id)}}" type="button" data-target="#show"
+                                                    data-toggle="modal" class="btn btn-info btn-show">Detail
+                                            </button>
+                                            <button data-url="{{route('notes.update', $note->id)}}" type="button" data-target="#edit"
+                                                    data-toggle="modal" class="btn btn-warning btn-edit">Edit
+                                            </button>
+                                            <button data-url="{{route('notes.destroy', $note->id)}}" type="button" data-target="#delete"
+                                                    data-toggle="modal" class="btn btn-danger btn-delete">Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            {{$notes->links()}}
+
+                        </div>
+
+                        <script
+                            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"
+                        ></script>
+                        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+                                integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+                                crossorigin="anonymous"></script>
+                        <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js" type="text/javascript"
+                                charset="utf-8" async defer></script>
+                        <script type="text/javascript" charset="utf-8">
+                            $.ajaxSetup({
+                                headers: {
+                                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                                }
+                            });
+                        </script>
+                        @include('note.add')
+                        @include('note.detail')
+                        @include('note.edit')
+
+
+                        {{--@section('scripts')--}}
+                        <script type="text/javascript">
+                            $(document).ready(function () {
+
+                                let origin= location.origin;
+                                $(document).on('keyup','#keyword', function (){
+                                    var keyword = $(this).val();
+                                    $.ajax({
+                                        type: "get",
+                                        url: "/search",
+                                        data: {keyword: keyword},
+                                        dataType: "json",
+                                        success: function (response) {
+                                            $('#listNote').html(response);
+                                        }
+                                    })
+
+                                })
+
+                                $('#form-add').submit(function (e) {
+                                    e.preventDefault();
+                                    var url = $(this).attr('data-url');
+                                    let name = $('#name-add').val();
+                                    let desc = $('#description-add').val();
+                                    let category = $('#category-add').val();
+                                    $.ajax({
+                                        type: 'post',
+                                        url: url,
+                                        data: {
+                                            name: name,
+                                            description: desc,
+                                            category: category,
+                                        },
+                                        success: function (response) {
+                                            toastr.success(response.message)
+                                            $('#modal-add').modal('hide');
+                                            console.log(response.data)
+                                            $('tbody').prepend('<tr>' +
+                                                '<td id = "' + response.data.id + '" > ' + response.data.id + ' </td>' +
+                                                '<td id="name-' + response.data.id + '">' + response.data.name + '</td>' +
+                                                '<td id="description-' + response.data.id + '">' + response.data.description + '</td>' +
+                                                '<td id="category-' + response.data.id + '">' + response.data.category + '</td>' +
+                                                {{--'<td><button data-url="{{asset('')}}notes/' + response.data.id + '" type="button" data-target="#show" data-toggle="modal" class="btn btn-info btn-show">Detail</button>' +--}}
+                                            {{--'<button data-url="{{asset('')}}notes/' + response.data.id + '" type="button" data-target="#edit" data-toggle="modal" class="btn btn-warning btn-edit">Edit</button>' +--}}
+                                            {{--'<button data-url="{{asset('')}}notes/' + response.data.id + '" type="button" data-target="#delete"data-toggle="modal" class="btn btn-danger btn-delete">Delete</button></td>' +--}}
+                                            '</tr>');
+
+                                            setTimeout(function (){
+                                                window.location.href= "{{route('notes.index')}}";
+                                            }, 1000);
+                                        },
+                                        error: function (jqXHR, textStatus, errorThrown) {
+
+                                        }
+                                    })
+                                })
+                                $('.btn-show').click(function () {
+                                    var url = $(this).attr('data-url');
+                                    $.ajax({
+                                        type: 'get',
+                                        url: url,
+                                        success: function (response) {
+                                            console.log(response)
+
+                                            $('h1#id').text(response.data.id)
+                                            $('h1#name').text(response.data.name)
+                                            $('h1#description').text(response.data.description)
+                                            $('h1#category').text(response.data.category)
+                                            $('h1#created_at').text(response.data.created_at)
+                                            $('h1#update_at').text(response.data.update_at)
+                                        },
+                                        error: function (jqXHR, textStatus, errorThrown) {
+                                            //xử lý lỗi tại đây
+                                        }
+                                    })
+                                })
+                                $('.btn-delete').click(function () {
+                                    var url = $(this).attr('data-url');
+                                    var _this = $(this);
+                                    if (confirm('Có chắc muốn xóa không thế??')) {
+                                        $.ajax({
+                                            type: 'delete',
+                                            url: url,
+                                            success: function (response) {
+                                                window.location.reload()
+                                            },
+                                            error: function (jqXHR, textStatus, errorThrown) {
+
+                                            }
+                                        })
+                                    }
+                                })
+
+                                $('.btn-edit').click(function (e) {
+                                    var url = $(this).attr('data-url');
+                                    $('#modal-edit').modal('show');
+                                    e.preventDefault();
+                                    $.ajax({
+                                        type: 'get',
+                                        url: url,
+                                        success: function (response) {
+                                            $('#id-note').val(response.data.id)
+                                            $('#name-edit').val(response.data.name);
+                                            $('#description-edit').val(response.data.description);
+                                            $('#category-edit').val(response.data.category);
+
+                                            $('#form-edit').attr('data-url', '{{ asset('notes/') }}/' + response.data.id)
+                                        },
+                                        error: function (error) {
+
+                                        }
+                                    })
+                                })
+                                $('#form-edit').submit(function (e) {
+                                    e.preventDefault();
+                                    let idNote = $('#id-note').val();
+                                    $.ajax({
+                                        type: 'put',
+                                        url: origin + '/admin/notes/' + idNote,
+                                        data: {
+                                            name: $('#name-edit').val(),
+                                            description: $('#description-edit').val(),
+                                            category: $('#category-edit').val(),
+                                        },
+                                        success: function (response) {
+                                            window.location.reload();
+                                        },
+                                        error: function (jqXHR, textStatus, errorThrown) {
+                                            //xử lý lỗi tại đây
+                                        }
+                                    })
+                                })
+
+                            })
+
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Footer-->
+        <footer class="footer bg-light">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-6 h-100 text-center text-lg-start my-auto">
+                        <ul class="list-inline mb-2">
+                            <li class="list-inline-item"><a href="#!">About</a></li>
+                            <li class="list-inline-item">⋅</li>
+                            <li class="list-inline-item"><a href="#!">Contact</a></li>
+                            <li class="list-inline-item">⋅</li>
+                            <li class="list-inline-item"><a href="#!">Terms of Use</a></li>
+                            <li class="list-inline-item">⋅</li>
+                            <li class="list-inline-item"><a href="#!">Privacy Policy</a></li>
+                        </ul>
+                        <p class="text-muted small mb-4 mb-lg-0">&copy; Your Website 2021. All Rights Reserved.</p>
+                    </div>
+                    <div class="col-lg-6 h-100 text-center text-lg-end my-auto">
+                        <ul class="list-inline mb-0">
+                            <li class="list-inline-item me-4">
+                                <a href="#!"><i class="bi-facebook fs-3"></i></a>
+                            </li>
+                            <li class="list-inline-item me-4">
+                                <a href="#!"><i class="bi-twitter fs-3"></i></a>
+                            </li>
+                            <li class="list-inline-item">
+                                <a href="#!"><i class="bi-instagram fs-3"></i></a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        <!-- Bootstrap core JS-->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- Core theme JS-->
+        <script src="js/scripts.js"></script>
+        <!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
+        <!-- * *                               SB Forms JS                               * *-->
+        <!-- * * Activate your form at https://startbootstrap.com/solution/contact-forms * *-->
+        <!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
+        <script src="https://cdn.startbootstrap.com/sb-forms-latest.js"></script>
+    </body>
+</html>
